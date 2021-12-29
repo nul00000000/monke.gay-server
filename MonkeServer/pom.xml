@@ -1,0 +1,15 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>gay.monke</groupId>
+  <artifactId>MonkeServer</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>monke.gay server</name>
+  <description>it serves those good packets (badly)</description>
+  <dependencies>
+  	<dependency>
+  	  <groupId>org.java-websocket</groupId>
+      <artifactId>Java-WebSocket</artifactId>
+      <version>1.5.1</version>
+    </dependency>
+  </dependencies>
+</project>
