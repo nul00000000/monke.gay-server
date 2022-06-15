@@ -290,7 +290,8 @@ public class World {
 					} else if(b.canKill) {
 						fountains.add(new BananaFountain(m.x, m.y, m.bananas / 2, this, random));
 						this.removeEntity(m);
-						this.broadcastPacket(new ChatPacket(m.getID(), ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, b.thrower != null ? b.thrower.name : "Server"), null);
+						this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, 
+								(b.thrower != null ? b.thrower.name : "Server") + " killed " + m.name), null);
 						j--;
 					}
 				}
