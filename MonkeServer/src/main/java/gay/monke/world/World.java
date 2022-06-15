@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Scanner;
 
 import org.java_websocket.WebSocket;
 
@@ -28,15 +29,31 @@ public class World {
 	private Server server;
 	private Random random;
 	
+	private ArrayList<String> names;
+	
 	public World(Server server) {
 		this.server = server;
 		bananas = new ArrayList<>();
 		monkes = new ArrayList<>();
 		fountains = new ArrayList<>();
 		random = new Random();
+		Scanner s = new Scanner(World.class.getResourceAsStream("/gay/monke/utility/names.csv"));
+		while(s.hasNextLine()) {
+			String[] objs = s.nextLine().split(",");
+			int weight = Integer.parseInt(objs[1]);
+			for(int i = 0; i < weight; i++) {
+				this.names.add(objs[0]);
+			}
+		}
+		s.close();
 		for(int i = 0; i < numMonkes; i++) {
 			this.addAIMonke(random.nextFloat() * this.worldSize - this.worldSize / 2, 0);
 		}
+		this.names = new ArrayList<>();
+	}
+	
+	public String getRandomName() {
+		return names.get(random.nextInt(names.size()));
 	}
 	
 	/**

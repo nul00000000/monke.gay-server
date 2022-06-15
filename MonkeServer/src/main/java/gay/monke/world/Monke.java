@@ -27,11 +27,10 @@ public class Monke implements Entity {
 		this.y = 0;
 		this.random = random;
 		this.id = id;
+		this.name = world.getRandomName();
 		if(random != null) {
-			this.name = "Bot" + random.nextInt(1000); 
 			this.skin = random.nextInt(14);
 		} else {
-			this.name = "uwu";
 			this.skin = 0;
 		}
 	}
@@ -42,11 +41,10 @@ public class Monke implements Entity {
 		this.x = x;
 		this.y = y;
 		this.id = id;
+		this.name = world.getRandomName();
 		if(random != null) {
-			this.name = "ServerMonke" + random.nextInt(1000); 
 			this.skin = random.nextInt(14);
 		} else {
-			this.name = "uwu";
 			this.skin = 0;
 		}
 	}
