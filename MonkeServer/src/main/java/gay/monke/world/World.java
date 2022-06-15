@@ -37,7 +37,9 @@ public class World {
 		monkes = new ArrayList<>();
 		fountains = new ArrayList<>();
 		random = new Random();
-		Scanner s = new Scanner(World.class.getResourceAsStream("/gay/monke/utility/names.csv"));
+		this.names = new ArrayList<>();
+		Scanner s = new Scanner(World.class.getResourceAsStream("/gay/monke/utility/names.csv"), "utf-16be");
+		
 		while(s.hasNextLine()) {
 			String[] objs = s.nextLine().split(",");
 			int weight = Integer.parseInt(objs[1]);
@@ -49,7 +51,7 @@ public class World {
 		for(int i = 0; i < numMonkes; i++) {
 			this.addAIMonke(random.nextFloat() * this.worldSize - this.worldSize / 2, 0);
 		}
-		this.names = new ArrayList<>();
+		
 	}
 	
 	public String getRandomName() {
