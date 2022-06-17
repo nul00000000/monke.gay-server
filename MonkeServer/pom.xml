@@ -2,9 +2,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>gay.monke</groupId>
   <artifactId>MonkeServer</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.1</version>
   <name>monke.gay server</name>
   <description>it serves those good packets (badly)</description>
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
   <dependencies>
   	<dependency>
   	  <groupId>org.java-websocket</groupId>
@@ -12,4 +16,33 @@
       <version>1.5.1</version>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>gay.monke.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
