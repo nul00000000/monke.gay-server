@@ -38,10 +38,11 @@ public class World {
 		fountains = new ArrayList<>();
 		random = new Random();
 		this.names = new ArrayList<>();
-		Scanner s = new Scanner(World.class.getResourceAsStream("/gay/monke/utility/names.csv"), "utf-16be");
+		Scanner s = new Scanner(World.class.getResourceAsStream("names.csv"), "utf-8");
 		
 		while(s.hasNextLine()) {
-			String[] objs = s.nextLine().split(",");
+			String line = s.nextLine();
+			String[] objs = line.split(",");
 			int weight = Integer.parseInt(objs[1]);
 			for(int i = 0; i < weight; i++) {
 				this.names.add(objs[0]);
