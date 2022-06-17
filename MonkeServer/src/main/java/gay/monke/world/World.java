@@ -52,7 +52,6 @@ public class World {
 		for(int i = 0; i < numMonkes; i++) {
 			this.addAIMonke(random.nextFloat() * this.worldSize - this.worldSize / 2, 0);
 		}
-		
 	}
 	
 	public String getRandomName() {
@@ -232,32 +231,42 @@ public class World {
 	
 	public void update() {
 		for(int i = 0; i < monkes.size(); i++) {
-			if(monkes.get(i) instanceof PlayerMonke) {
-				PlayerMonke m = (PlayerMonke) monkes.get(i);
-				if(server.outgoingConnections.contains(m.connection)) {
-					this.removeEntity(m);
-					server.outgoingConnections.remove(m.connection);
-					i--;
-					continue;
-				}
-				if(server.available(m.connection) < 0) {
-					this.removeEntity(m);
-					continue;
-				}
-				while(server.available(m.connection) > 0) {
-					Packet read = server.readPacket(m.connection);
-					if(read instanceof EntityPosPacket || read instanceof EntityInfoPacket) {
-						m.applyPacket(read);
-					} else if(read instanceof BananaSpawnPacket) {
-						if(m.bananas > 0) {
-							Banana b = this.addBanana(30.0f, m.getX(), m.getY() - m.getHeight() / 2, ((BananaSpawnPacket) read).getAngle(), m);
-							m.bananas--;
-							this.server.sendPacket(m.connection, new BananaSpawnPacket(b.getID(), 0));
+			try { //catchall to make sure server doesnt crash from dirty client
+				if(monkes.get(i) instanceof PlayerMonke) {
+					PlayerMonke m = (PlayerMonke) monkes.get(i);
+					if(server.outgoingConnections.contains(m.connection)) {
+						this.removeEntity(m);
+						server.outgoingConnections.remove(m.connection);
+						i--;
+						continue;
+					}
+					if(server.available(m.connection) < 0) {
+						this.removeEntity(m);
+						continue;
+					}
+					while(server.available(m.connection) > 0) {
+						Packet read = server.readPacket(m.connection);
+						if(read instanceof EntityPosPacket || read instanceof EntityInfoPacket) {
+							m.applyPacket(read);
+						} else if(read instanceof BananaSpawnPacket) {
+							if(m.bananas > 0) {
+								Banana b = this.addBanana(30.0f, m.getX(), m.getY() - m.getHeight() / 2, ((BananaSpawnPacket) read).getAngle(), m);
+								m.bananas--;
+								this.server.sendPacket(m.connection, new BananaSpawnPacket(b.getID(), 0));
+							}
+						} else if(read instanceof ChatPacket) {
+							System.out.println("[CHAT] <" + m.name + "> " + ((ChatPacket)read).getMessage());
+							this.server.broadcastPacket(new ChatPacket(((ChatPacket)read).getID(), 0, ((ChatPacket)read).getMessage()));
+						} else {
+							System.err.println("Unrecognized packet: " + read);
 						}
-					} else {
-						System.err.println("Unrecognized packet: " + read);
 					}
 				}
+			} catch(Exception e) {
+				e.printStackTrace();
+				System.out.println("Error, kicking offending Monke");
+				this.removeEntity(monkes.get(i));
+				this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, ""), null);
 			}
 		}
 		

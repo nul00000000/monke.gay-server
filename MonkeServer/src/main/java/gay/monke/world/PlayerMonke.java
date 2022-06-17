@@ -45,7 +45,7 @@ public class PlayerMonke extends Monke {
 				this.skin = b.getShort();
 				this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 0, ((EntityInfoPacket) p).getInfo()), this);
 			} else if(((EntityInfoPacket) p).getCode() == 1) {
-				this.name = ((EntityInfoPacket) p).getString();
+				this.name = ((EntityInfoPacket) p).getString().trim();
 				this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 1, ((EntityInfoPacket) p).getInfo()), this);
 				System.out.println("[" + connection.getRemoteSocketAddress() + "] = (" + name + ")");
 			}

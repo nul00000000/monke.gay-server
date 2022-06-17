@@ -70,8 +70,7 @@ public class EntityInfoPacket extends Packet {
 	}
 	
 	public String getString() {
-		String r = null;
-		r = new String(info, StandardCharsets.UTF_16BE);
+		String r = new String(info, StandardCharsets.UTF_16BE);
 		return r;
 	}
 

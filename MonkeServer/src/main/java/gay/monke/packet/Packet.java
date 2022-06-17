@@ -107,7 +107,7 @@ public abstract class Packet {
 			return EntityInfoPacket.length;
 		case "bs":
 			return BananaSpawnPacket.length;
-		case "ch":
+		case "cp":
 			return ChatPacket.length;
 		}
 	}
@@ -132,7 +132,7 @@ public abstract class Packet {
 			return EntityInfoPacket.class;
 		case "bs":
 			return BananaSpawnPacket.class;
-		case "ch":
+		case "cp":
 			return ChatPacket.class;
 		}
 	}
