@@ -1,6 +1,5 @@
 package gay.monke;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -34,7 +33,7 @@ public class Server extends WebSocketServer {
 		}
 		try {
 			this.stop();
-		} catch (IOException | InterruptedException e) {
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}

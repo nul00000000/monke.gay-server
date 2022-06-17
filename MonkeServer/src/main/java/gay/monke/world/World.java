@@ -38,7 +38,7 @@ public class World {
 		fountains = new ArrayList<>();
 		random = new Random();
 		this.names = new ArrayList<>();
-		Scanner s = new Scanner(World.class.getResourceAsStream("names.csv"), "utf-8");
+		Scanner s = new Scanner(World.class.getResourceAsStream("/gay/monke/names.csv"), "utf-8");
 		
 		while(s.hasNextLine()) {
 			String line = s.nextLine();
