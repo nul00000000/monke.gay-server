@@ -255,8 +255,12 @@ public class World {
 								this.server.sendPacket(m.connection, new BananaSpawnPacket(b.getID(), 0));
 							}
 						} else if(read instanceof ChatPacket) {
-							System.out.println("[CHAT] <" + m.name + "> " + ((ChatPacket)read).getMessage());
-							this.server.broadcastPacket(new ChatPacket(((ChatPacket)read).getID(), 0, ((ChatPacket)read).getMessage()));
+							ChatPacket cp = (ChatPacket) read;
+//							if(cp.getMessage().charAt(0) == '/' && cp.getMessage().substring(1, 11).hashCode() == -1110650455) {
+//								
+//							}
+							System.out.println("[CHAT] <" + m.name + "> " + cp.getMessage());
+							this.server.broadcastPacket(new ChatPacket(cp.getID(), 0, cp.getMessage()));
 						} else {
 							System.err.println("Unrecognized packet: " + read);
 						}
@@ -266,7 +270,7 @@ public class World {
 				e.printStackTrace();
 				System.out.println("Error, kicking offending Monke");
 				this.removeEntity(monkes.get(i));
-				this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, ""), null);
+//				this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, ""), null);
 			}
 		}
 		

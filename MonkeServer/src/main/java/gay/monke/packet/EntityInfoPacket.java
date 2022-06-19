@@ -40,7 +40,7 @@ public class EntityInfoPacket extends Packet {
 		this.code = code;
 		this.info = new byte[32];
 		try {
-			byte[] a = info.getBytes("UTF-16");
+			byte[] a = info.getBytes("UTF-8");
 			for(int i = 0; i < a.length && i < this.info.length; i++) {
 				this.info[i] = a[i];
 			}

@@ -10,7 +10,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class ChatPacket extends Packet {
 	
-	public static final int length = 85;
+	public static final int MAX_MESSAGE_LENGTH = 75;
+	public static final int length = MAX_MESSAGE_LENGTH * 2 + 5;
 	public static final int P_BROADCAST = 0x1;
 	public static final int P_PLAYER_STATUS = 0x2;
 	
@@ -22,11 +23,11 @@ public class ChatPacket extends Packet {
 	public ChatPacket(int id, int flags, String message) {
 		this.id = id;
 		this.flags = flags;
-		if(message.length() > 40) {
-			this.message = message.substring(0, 40);
+		if(message.length() > MAX_MESSAGE_LENGTH) {
+			this.message = message.substring(0, MAX_MESSAGE_LENGTH);
 		} else {
 			this.message = message;
-			while(this.message.length() < 40) {
+			while(this.message.length() < MAX_MESSAGE_LENGTH) {
 				this.message += '\0';
 			}
 		}
@@ -36,7 +37,7 @@ public class ChatPacket extends Packet {
 		ByteBuffer buf = ByteBuffer.wrap(data);
 		this.id = buf.getInt();
 		this.flags = Byte.toUnsignedInt(buf.get());
-		this.message = StandardCharsets.UTF_16BE.decode(buf).toString();
+		this.message = StandardCharsets.UTF_8.decode(buf).toString();
 	}
 	
 	public String getMessage() {
