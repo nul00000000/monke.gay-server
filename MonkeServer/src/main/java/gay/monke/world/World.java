@@ -234,6 +234,7 @@ public class World {
 			if(monkes.get(0).bananas <= 0) {
 				this.removeEntity(monkes.get(0));
 				i--;
+				continue;
 			}
 			try { //catchall to make sure server doesnt crash from dirty client
 				if(monkes.get(i) instanceof PlayerMonke) {
@@ -286,6 +287,7 @@ public class World {
 			}
 		}
 		
+		outer:
 		for(int j = 0; j < monkes.size(); j++) {
 			Monke m = monkes.get(j);
 			float x1 = m.x - m.getWidth() / 2;
@@ -342,6 +344,7 @@ public class World {
 							this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, 
 									(b.thrower != null ? b.thrower.name : "Server") + " killed " + m.name), null);
 							j--;
+							continue outer;
 						} else {
 							if(m instanceof PlayerMonke) {
 								server.sendPacket(((PlayerMonke) m).connection, new EntityPosPacket(m));
