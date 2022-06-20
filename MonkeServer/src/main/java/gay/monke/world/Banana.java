@@ -1,5 +1,7 @@
 package gay.monke.world;
 
+import java.util.ArrayList;
+
 public class Banana implements Entity {
 	
 	public float x;
@@ -17,6 +19,8 @@ public class Banana implements Entity {
 	public boolean canKill;
 	public boolean onGround = false;
 	
+	public ArrayList<Monke> hitMonkes;
+	
 	public Banana(int id, float x, float y, float speed, float angle, Monke thrower, World world, boolean canKill) {
 		this.id = id;
 		this.thrower = thrower;
@@ -28,6 +32,7 @@ public class Banana implements Entity {
 		this.canKill = canKill;
 		this.angle = 0;
 		this.world = world;
+		this.hitMonkes = new ArrayList<>();
 	}
 	
 	public void update() {

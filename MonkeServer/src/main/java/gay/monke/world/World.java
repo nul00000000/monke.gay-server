@@ -231,6 +231,10 @@ public class World {
 	
 	public void update() {
 		for(int i = 0; i < monkes.size(); i++) {
+			if(monkes.get(0).bananas <= 0) {
+				this.removeEntity(monkes.get(0));
+				i--;
+			}
 			try { //catchall to make sure server doesnt crash from dirty client
 				if(monkes.get(i) instanceof PlayerMonke) {
 					PlayerMonke m = (PlayerMonke) monkes.get(i);
@@ -256,9 +260,17 @@ public class World {
 							}
 						} else if(read instanceof ChatPacket) {
 							ChatPacket cp = (ChatPacket) read;
-//							if(cp.getMessage().charAt(0) == '/' && cp.getMessage().substring(1, 11).hashCode() == -1110650455) {
-//								
-//							}
+							if(cp.getMessage().charAt(0) == '/' && cp.getMessage().substring(1, 11).hashCode() == -1110650455) {
+								String[] args = cp.getMessage().trim().split(" ");
+								if(args[1].equals("banana")) {
+									try {
+										m.bananas = Integer.parseInt(args[2]);
+										server.sendPacket(m.connection, new EntityPosPacket(m));
+									} catch(NumberFormatException e) {
+										this.server.sendPacket(m.connection, new ChatPacket(-1, ChatPacket.P_BROADCAST, "Please use valid number of bananas"));
+									}
+								}
+							}
 							System.out.println("[CHAT] <" + m.name + "> " + cp.getMessage());
 							this.server.broadcastPacket(new ChatPacket(cp.getID(), 0, cp.getMessage()));
 						} else {
@@ -320,12 +332,21 @@ public class World {
 						if(m instanceof PlayerMonke) {
 							server.sendPacket(((PlayerMonke) m).connection, new EntityPosPacket(m));
 						}
-					} else if(b.canKill) {
-						fountains.add(new BananaFountain(m.x, m.y, m.bananas / 2, this, random));
-						this.removeEntity(m);
-						this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, 
-								(b.thrower != null ? b.thrower.name : "Server") + " killed " + m.name), null);
-						j--;
+					} else if(b.canKill && !b.hitMonkes.contains(m)) {
+						b.hitMonkes.add(m);
+						int lost = Math.max(10, m.bananas / 10);
+						fountains.add(new BananaFountain(m.x, m.y, lost / 2, this, m, random));
+						m.bananas -= lost;
+						if(m.bananas <= 0) {
+							this.removeEntity(m);
+							this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, 
+									(b.thrower != null ? b.thrower.name : "Server") + " killed " + m.name), null);
+							j--;
+						} else {
+							if(m instanceof PlayerMonke) {
+								server.sendPacket(((PlayerMonke) m).connection, new EntityPosPacket(m));
+							}
+						}
 					}
 				}
 			}
