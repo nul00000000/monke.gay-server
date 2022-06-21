@@ -14,6 +14,7 @@ public class ChatPacket extends Packet {
 	public static final int length = MAX_MESSAGE_LENGTH * 2 + 5;
 	public static final int P_BROADCAST = 0x1;
 	public static final int P_PLAYER_STATUS = 0x2;
+	public static final int P_CMD = 0x4;
 	
 	private static final byte[] prefix = Packet.createPrefix("cp");
 	private String message;

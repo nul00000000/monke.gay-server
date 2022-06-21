@@ -49,6 +49,14 @@ public class Monke implements Entity {
 		}
 	}
 	
+	public void setBananas(int num) {
+		this.bananas = num;
+	}
+	
+	public void addBananas(int change) {
+		this.bananas += change;
+	}
+	
 	public float getWidth() {
 		return Math.max(40.0f, bananas * 4.0f);
 	}
@@ -118,6 +126,11 @@ public class Monke implements Entity {
 	@Override
 	public int getType() {
 		return 0;
+	}
+	
+	@Override
+	public String toString() {
+		return name + ":" + id;
 	}
 
 }

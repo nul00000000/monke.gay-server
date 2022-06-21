@@ -54,6 +54,18 @@ public class PlayerMonke extends Monke {
 		}
 	}
 	
+	@Override
+	public void setBananas(int num) {
+		super.setBananas(num);
+		this.world.sendPacket(this, new EntityPosPacket(this));
+	}
+	
+	@Override
+	public void addBananas(int change) {
+		super.addBananas(change);
+		this.world.sendPacket(this, new EntityPosPacket(this));
+	}
+	
 	public void update() {
 		if(ticks > 150) {
 			canThrow = true;

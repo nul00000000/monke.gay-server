@@ -127,6 +127,7 @@ public class World {
 		return r;
 	}
 	
+	//gets first monke with that name
 	public Monke getByName(String name) {
 		for(Monke e : monkes) {
 			if(e.name.equals(name)) {
@@ -201,12 +202,12 @@ public class World {
 		server.sendPacket(player.connection, new EntityInfoPacket(player.getID(), 2, bb.array()));
 		for(Monke eb : this.monkes) {
 			if(eb != player) {
-				server.sendPacket(player.connection, new EntityStatusPacket(eb, true));
+				sendPacket(player, new EntityStatusPacket(eb, true));
 				ByteBuffer bb2 = ByteBuffer.wrap(new byte[32]);
 				bb2.order(ByteOrder.LITTLE_ENDIAN);
 				bb2.putShort((short) eb.skin);
-				server.sendPacket(player.connection, new EntityInfoPacket(eb.getID(), 0, bb2.array()));
-				server.sendPacket(player.connection, new EntityInfoPacket(eb.getID(), 1, eb.name));
+				sendPacket(player, new EntityInfoPacket(eb.getID(), 0, bb2.array()));
+				sendPacket(player, new EntityInfoPacket(eb.getID(), 1, eb.name));
 				if(eb instanceof PlayerMonke) {
 					server.sendPacket(((PlayerMonke) eb).connection, new EntityStatusPacket(player, true));
 				}
@@ -216,7 +217,6 @@ public class World {
 			server.sendPacket(player.connection, new EntityStatusPacket(eb, true));
 		}
 		server.sendPacket(player.connection, new WorldSizePacket(this));
-		//server.sendPacket(player.connection, new ChatPacket(69, 0x43, "wow thats a bit sussy"));
 		return player;
 	}
 	
@@ -224,9 +224,26 @@ public class World {
 		for(int i = 0; i < monkes.size(); i++) {
 			Monke m = monkes.get(i);
 			if(m instanceof PlayerMonke && m != exclude) {
-				server.sendPacket(((PlayerMonke) m).connection, packet);
+				sendPacket((PlayerMonke) m, packet);
 			}
 		}
+	}
+	
+	public void sendPacket(PlayerMonke to, Packet packet) {
+		this.server.sendPacket(to.connection, packet);
+	}
+	
+	public void broadcast(String msg) {
+		for(int i = 0; i < monkes.size(); i++) {
+			Monke m = monkes.get(i);
+			if(m instanceof PlayerMonke) {
+				sendPacket((PlayerMonke) m, new ChatPacket(-1, ChatPacket.P_BROADCAST, msg));
+			}
+		}
+	}
+	
+	public void sendMessage(PlayerMonke m, String msg) {
+		sendPacket(m, new ChatPacket(-1, ChatPacket.P_CMD, msg));
 	}
 	
 	public void update() {
@@ -257,7 +274,7 @@ public class World {
 							if(m.bananas > 0) {
 								Banana b = this.addBanana(30.0f, m.getX(), m.getY() - m.getHeight() / 2, ((BananaSpawnPacket) read).getAngle(), m);
 								m.bananas--;
-								this.server.sendPacket(m.connection, new BananaSpawnPacket(b.getID(), 0));
+								sendPacket(m, new BananaSpawnPacket(b.getID(), 0));
 							}
 						} else if(read instanceof ChatPacket) {
 							ChatPacket cp = (ChatPacket) read;
@@ -265,15 +282,24 @@ public class World {
 								String[] args = cp.getMessage().trim().split(" ");
 								if(args[1].equals("banana")) {
 									try {
-										m.bananas = Integer.parseInt(args[2]);
-										server.sendPacket(m.connection, new EntityPosPacket(m));
+										Monke affected = m;
+										if(args.length > 3) {
+											affected = this.getByName(args[3]);
+											if(affected == null) {
+												sendMessage(m, "Could not find player " + args[3]);
+												continue;
+											}
+										}
+										affected.setBananas(Integer.parseInt(args[2]));
+										sendMessage(m, "Set bananas of player " + affected.name + " to " + args[2]);
 									} catch(NumberFormatException e) {
-										this.server.sendPacket(m.connection, new ChatPacket(-1, ChatPacket.P_BROADCAST, "Please use valid number of bananas"));
+										sendMessage(m, "Please use valid number of bananas");
 									}
 								}
+							} else {
+								System.out.println("[CHAT] <" + m.name + "> " + cp.getMessage());
+								broadcastPacket(new ChatPacket(cp.getID(), 0, cp.getMessage()), null);
 							}
-							System.out.println("[CHAT] <" + m.name + "> " + cp.getMessage());
-							this.server.broadcastPacket(new ChatPacket(cp.getID(), 0, cp.getMessage()));
 						} else {
 							System.err.println("Unrecognized packet: " + read);
 						}
