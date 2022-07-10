@@ -10,8 +10,10 @@ import java.util.Date;
 
 import org.java_websocket.WebSocket;
 
-import gay.monke.packet.EntityStatusPacket;
+import gay.monke.account.AccountProfile;
+import gay.monke.database.AccountDatabase;
 import gay.monke.packet.Packet;
+import gay.monke.packet.TokenPacket;
 import gay.monke.world.Monke;
 import gay.monke.world.World;
 
@@ -24,6 +26,7 @@ public class Main {
 	private ArrayList<WebSocket> queue;
 	private World world;
 	private Thread serverThread;
+	private AccountDatabase db;
 	
 	//private Random random;
 		
@@ -36,18 +39,26 @@ public class Main {
 		double a = 0;
 		double b = 0;
 		
-		while(true) {
-			a = System.nanoTime() / 1000000000.0;
-			checkConsole();
-			checkConnections();
-			update();
-			b = System.nanoTime() / 1000000000.0 - a;
-			if(b < SPT) {
-				try {
-					Thread.sleep((long) ((SPT - b) * 1000));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		try {
+			while(true) {
+				a = System.nanoTime() / 1000000000.0;
+				checkConsole();
+				checkConnections();
+				update();
+				b = System.nanoTime() / 1000000000.0 - a;
+				if(b < SPT) {
+					try {
+						Thread.sleep((long) ((SPT - b) * 1000));
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
+			}
+		} finally {
+			try {
+				server.stop();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -93,16 +104,18 @@ public class Main {
 			int h = server.available(con);
 			if(h == 1) {
 				Packet p = server.readPacket(con);
-				if(p instanceof EntityStatusPacket) {
-					if(((EntityStatusPacket) p).getSpawned()) { 
-						if(((EntityStatusPacket) p).getEntityType() == 0) {
-							world.addPlayerMonke(con);
-							System.out.println("+[" + con.getRemoteSocketAddress() + "] joined server");
-							queue.remove(i);
-							i--;
-						} else {
-							System.err.println("Apparently a banana joined the game or something??? [" + Date.from(Instant.now()).toString() + "]");
-						}
+				if(p instanceof TokenPacket) {
+					AccountProfile prof;
+					if(((TokenPacket) p).getId() == 0) {
+						prof = new AccountProfile(0, "Monke", (short) 0, (short) 0, (short) 0);
+					} else {
+						prof = db.getProfileWithToken(((TokenPacket) p).getId(), ((TokenPacket) p).getToken());
+					}
+					if(prof != null) {
+						world.addPlayerMonke(con, prof);
+						System.out.println("[JOIN] " + prof.username + " (" + prof.id + ")");
+						queue.remove(i);
+						i--;
 					}
 				} else {
 					server.backlogPacket(con, p);
@@ -127,6 +140,7 @@ public class Main {
 		server = new Server(new InetSocketAddress(8080));
 		console = new BufferedReader(new InputStreamReader(System.in));
 		queue = new ArrayList<>();
+		db = new AccountDatabase();
 		serverThread = new Thread(server);
 		serverThread.start();
 	}

@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * idk where to put this so code 0 = skin, code 1 = name, code 2 = player id setting, code 3 = banana info
  * Contains data in the struture: {<2:id(uint16)><1:infocode(uint8)><32:info(byte[32])>}
- * @author nul00000000
+ * @author nulcr
  *
  */
 public class EntityInfoPacket extends Packet {

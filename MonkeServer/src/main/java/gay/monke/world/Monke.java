@@ -65,6 +65,10 @@ public class Monke implements Entity {
 		return Math.max(20.0f, bananas * 2.0f);
 	}
 	
+	public boolean isAdmin() {
+		return false;
+	}
+	
 	public void update() {
 		if(ticks > 150) {
 			canThrow = true;

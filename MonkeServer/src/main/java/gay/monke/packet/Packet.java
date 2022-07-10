@@ -109,6 +109,10 @@ public abstract class Packet {
 			return BananaSpawnPacket.length;
 		case "cp":
 			return ChatPacket.length;
+		case "tp":
+			return TokenPacket.length;
+		case "pp":
+			return ProfilePacket.length;
 		}
 	}
 	
@@ -134,6 +138,10 @@ public abstract class Packet {
 			return BananaSpawnPacket.class;
 		case "cp":
 			return ChatPacket.class;
+		case "tp":
+			return TokenPacket.class;
+		case "pp":
+			return ProfilePacket.class;
 		}
 	}
 	

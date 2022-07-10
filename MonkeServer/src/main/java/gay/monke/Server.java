@@ -117,12 +117,10 @@ public class Server extends WebSocketServer {
 	public void onOpen(WebSocket conn, ClientHandshake handshake) {
 		incoming.put(conn, new ArrayList<>());
 		incomingConnections.add(conn);
-		System.out.println("+[" + conn.getRemoteSocketAddress() + "]");
 	}
 
 	@Override
 	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-		System.out.println("-[" + conn.getRemoteSocketAddress() + "]");
 		incomingConnections.remove(conn); //returns true if connection has not been accepted
 		incoming.remove(conn);
 		outgoingConnections.add(conn);

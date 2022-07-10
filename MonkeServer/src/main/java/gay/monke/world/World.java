@@ -9,6 +9,7 @@ import java.util.Scanner;
 import org.java_websocket.WebSocket;
 
 import gay.monke.Server;
+import gay.monke.account.AccountProfile;
 import gay.monke.packet.BananaSpawnPacket;
 import gay.monke.packet.ChatPacket;
 import gay.monke.packet.EntityInfoPacket;
@@ -151,7 +152,7 @@ public class World {
 			Packet p = new EntityStatusPacket(e.getID(), false, e.getType());
 			this.broadcastPacket(p, null);
 			if(e instanceof PlayerMonke) {
-				server.sendPacket(((PlayerMonke) e).connection, p);
+				sendPacket((PlayerMonke) e, p);
 				server.closeConnection(((PlayerMonke) e).connection, 0);
 			}
 		}
@@ -194,12 +195,12 @@ public class World {
 		return monke;
 	}
 	
-	public PlayerMonke addPlayerMonke(WebSocket session) {
-		PlayerMonke player = new PlayerMonke(this.getNextID(), this, session);
+	public PlayerMonke addPlayerMonke(WebSocket session, AccountProfile profile) {
+		PlayerMonke player = new PlayerMonke(this.getNextID(), this, session, profile);
 		this.monkes.add(player);
 		ByteBuffer bb = ByteBuffer.wrap(new byte[32]);
 		bb.putShort((short) player.getID());
-		server.sendPacket(player.connection, new EntityInfoPacket(player.getID(), 2, bb.array()));
+		sendPacket(player, new EntityInfoPacket(player.getID(), 2, bb.array()));
 		for(Monke eb : this.monkes) {
 			if(eb != player) {
 				sendPacket(player, new EntityStatusPacket(eb, true));
@@ -208,15 +209,15 @@ public class World {
 				bb2.putShort((short) eb.skin);
 				sendPacket(player, new EntityInfoPacket(eb.getID(), 0, bb2.array()));
 				sendPacket(player, new EntityInfoPacket(eb.getID(), 1, eb.name));
-				if(eb instanceof PlayerMonke) {
-					server.sendPacket(((PlayerMonke) eb).connection, new EntityStatusPacket(player, true));
+				if(eb instanceof PlayerMonke && !eb.isAdmin()) {
+					sendPacket((PlayerMonke) eb, new EntityStatusPacket(player, true));
 				}
 			}
 		}
 		for(Banana eb : this.bananas) {
-			server.sendPacket(player.connection, new EntityStatusPacket(eb, true));
+			sendPacket(player, new EntityStatusPacket(eb, true));
 		}
-		server.sendPacket(player.connection, new WorldSizePacket(this));
+		sendPacket(player, new WorldSizePacket(this));
 		return player;
 	}
 	
@@ -309,7 +310,6 @@ public class World {
 				e.printStackTrace();
 				System.out.println("Error, kicking offending Monke");
 				this.removeEntity(monkes.get(i));
-//				this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, ""), null);
 			}
 		}
 		
@@ -358,7 +358,7 @@ public class World {
 						i--;
 						m.bananas++;
 						if(m instanceof PlayerMonke) {
-							server.sendPacket(((PlayerMonke) m).connection, new EntityPosPacket(m));
+							sendPacket((PlayerMonke) m, new EntityPosPacket(m));
 						}
 					} else if(b.canKill && !b.hitMonkes.contains(m)) {
 						b.hitMonkes.add(m);
@@ -373,7 +373,7 @@ public class World {
 							continue outer;
 						} else {
 							if(m instanceof PlayerMonke) {
-								server.sendPacket(((PlayerMonke) m).connection, new EntityPosPacket(m));
+								sendPacket((PlayerMonke) m, new EntityPosPacket(m));
 							}
 						}
 					}
@@ -400,7 +400,8 @@ public class World {
 			}
 		}
 		for(Monke m : monkes) {
-			this.broadcastPacket(new EntityPosPacket(m), m);
+			if(!m.isAdmin())
+				this.broadcastPacket(new EntityPosPacket(m), m);
 		}
 		for(Banana b : bananas) {
 			this.broadcastPacket(new EntityPosPacket(b), null);

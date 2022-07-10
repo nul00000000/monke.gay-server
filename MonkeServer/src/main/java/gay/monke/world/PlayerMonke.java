@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 
 import org.java_websocket.WebSocket;
 
+import gay.monke.account.AccountProfile;
 import gay.monke.packet.EntityInfoPacket;
 import gay.monke.packet.EntityPosPacket;
 import gay.monke.packet.Packet;
@@ -12,11 +13,13 @@ import gay.monke.packet.Packet;
 public class PlayerMonke extends Monke {
 	
 	public WebSocket connection;
+	public final AccountProfile account;
 	public boolean needsInfoUpdate = false;
 
-	public PlayerMonke(int id, World world, WebSocket con) {
+	public PlayerMonke(int id, World world, WebSocket con, AccountProfile account) {
 		super(id, 0, world, null);
 		this.y = 0;
+		this.account = account;
 		this.connection = con;
 	}
 	
@@ -39,19 +42,25 @@ public class PlayerMonke extends Monke {
 				world.reportModifiedClient(7, this);
 			}
 		} else if(p instanceof EntityInfoPacket) {
-			if(((EntityInfoPacket) p).getCode() == 0) {
-				ByteBuffer b = ByteBuffer.wrap(((EntityInfoPacket) p).getInfo());
-				b.order(ByteOrder.LITTLE_ENDIAN);
-				this.skin = b.getShort();
-				this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 0, ((EntityInfoPacket) p).getInfo()), this);
-			} else if(((EntityInfoPacket) p).getCode() == 1) {
-				this.name = ((EntityInfoPacket) p).getString().trim();
-				this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 1, ((EntityInfoPacket) p).getInfo()), this);
-				System.out.println("[" + connection.getRemoteSocketAddress() + "] = (" + name + ")");
+			if(!isAdmin()) {
+				if(((EntityInfoPacket) p).getCode() == 0) {
+					ByteBuffer b = ByteBuffer.wrap(((EntityInfoPacket) p).getInfo());
+					b.order(ByteOrder.LITTLE_ENDIAN);
+					this.skin = b.getShort();
+					this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 0, ((EntityInfoPacket) p).getInfo()), this);
+				} else if(((EntityInfoPacket) p).getCode() == 1) {
+					this.name = ((EntityInfoPacket) p).getString().trim();
+					this.world.broadcastPacket(new EntityInfoPacket(this.getID(), 1, ((EntityInfoPacket) p).getInfo()), this);
+				}
 			}
 		} else {
 			System.out.println("What if you modded the monke.gay servers... jk... unless? [" + p + "]");
 		}
+	}
+	
+	@Override
+	public boolean isAdmin() {
+		return account.id == -1081135245;
 	}
 	
 	@Override
@@ -71,7 +80,7 @@ public class PlayerMonke extends Monke {
 			canThrow = true;
 		}
 		ticks++;
-		//do nothing because for now there shall be no regulation. Anarchy shall reign supreme. SUBSCRIBE TO TECHNOBLADE. <- this holds up a month later <- true 3 months
+		//do nothing because for now there shall be no regulation. Anarchy shall reign supreme. SUBSCRIBE TO TECHNOBLADE. <- this holds up a month later <- true 3 months <- fuck cancer 10 months
 	}
 	
 	@Override
