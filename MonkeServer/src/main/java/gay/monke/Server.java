@@ -123,7 +123,9 @@ public class Server extends WebSocketServer {
 	public void onClose(WebSocket conn, int code, String reason, boolean remote) {
 		incomingConnections.remove(conn); //returns true if connection has not been accepted
 		incoming.remove(conn);
-		outgoingConnections.add(conn);
+		if(remote) {
+			outgoingConnections.add(conn);
+		}
 	}
 
 	@Override

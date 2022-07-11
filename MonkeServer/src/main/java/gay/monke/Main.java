@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.java_websocket.WebSocket;
 
@@ -32,7 +30,7 @@ public class Main {
 		
 	private void run() {
 		//this.random = new Random();
-		world = new World(server);
+		world = new World(server, db);
 				
 		double TPS = 60;
 		double SPT = 1.0 / TPS;
@@ -107,9 +105,9 @@ public class Main {
 				if(p instanceof TokenPacket) {
 					AccountProfile prof;
 					if(((TokenPacket) p).getId() == 0) {
-						prof = new AccountProfile(0, "Monke", (short) 0, (short) 0, (short) 0);
+						prof = new AccountProfile(0, "Monke", (short) 0, (short) 0, (short) 0, ((TokenPacket) p).getTimezoneOffset(), System.currentTimeMillis());
 					} else {
-						prof = db.getProfileWithToken(((TokenPacket) p).getId(), ((TokenPacket) p).getToken());
+						prof = db.getProfileWithToken((TokenPacket) p);
 					}
 					if(prof != null) {
 						world.addPlayerMonke(con, prof);

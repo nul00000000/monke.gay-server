@@ -2,6 +2,10 @@ package gay.monke.world;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -10,12 +14,14 @@ import org.java_websocket.WebSocket;
 
 import gay.monke.Server;
 import gay.monke.account.AccountProfile;
+import gay.monke.database.AccountDatabase;
 import gay.monke.packet.BananaSpawnPacket;
 import gay.monke.packet.ChatPacket;
 import gay.monke.packet.EntityInfoPacket;
 import gay.monke.packet.EntityPosPacket;
 import gay.monke.packet.EntityStatusPacket;
 import gay.monke.packet.Packet;
+import gay.monke.packet.ProfilePacket;
 import gay.monke.packet.WorldSizePacket;
 
 public class World {
@@ -28,12 +34,14 @@ public class World {
 	public ArrayList<BananaFountain> fountains;
 	
 	private Server server;
+	private AccountDatabase db;
 	private Random random;
 	
 	private ArrayList<String> names;
 	
-	public World(Server server) {
+	public World(Server server, AccountDatabase db) {
 		this.server = server;
+		this.db = db;
 		bananas = new ArrayList<>();
 		monkes = new ArrayList<>();
 		fountains = new ArrayList<>();
@@ -118,12 +126,7 @@ public class World {
 			}
 		}
 		if(r != null) {
-			this.broadcastPacket(new EntityStatusPacket(r, false), null);
-			if(r instanceof Monke) {
-				monkes.remove(r);
-			} else if(r instanceof Banana) {
-				bananas.remove(r);
-			}
+			this.removeEntity(r);
 		}
 		return r;
 	}
@@ -140,6 +143,19 @@ public class World {
 	
 	public boolean removeEntity(Entity e) {
 		boolean ret = false;
+		Packet p = new EntityStatusPacket(e.getID(), false, e.getType());
+		this.broadcastPacket(p, null);
+		if(e instanceof PlayerMonke) {
+			PlayerMonke m = (PlayerMonke) e;
+			m.profile.addXp((m.maxBananas - 10) * 5 + m.ticks / 60);
+			db.updateProfile(m.profile);
+			this.updateProfile(m);
+//			if(m.connection.isOpen()) {
+				sendPacket(m, p);
+				server.closeConnection(m.connection, 0);
+//			}
+			System.out.println("[LEAVE] " + m.profile.username + " (" +  m.profile.id + ")");
+		}
 		if(e instanceof Monke) {
 			ret = monkes.remove(e);
 		} else if(e instanceof Banana) {
@@ -147,14 +163,6 @@ public class World {
 		} else {
 			System.out.println("Tried to remove entity not of known type");
 			return false;
-		}
-		if(ret) {
-			Packet p = new EntityStatusPacket(e.getID(), false, e.getType());
-			this.broadcastPacket(p, null);
-			if(e instanceof PlayerMonke) {
-				sendPacket((PlayerMonke) e, p);
-				server.closeConnection(((PlayerMonke) e).connection, 0);
-			}
 		}
 		return ret;
 	}
@@ -167,11 +175,7 @@ public class World {
 	 * @return banana
 	 */
 	public Banana addBanana(float speed, float x, float y, float angle, Monke thrower) {
-		Banana banana = new Banana(this.getNextID(), x, y, speed, angle, thrower, this, true);
-		bananas.add(banana);
-		this.broadcastPacket(new EntityStatusPacket(banana, true), thrower);
-		this.broadcastPacket(new EntityPosPacket(banana), thrower);
-		return banana;
+		return addBanana(speed, x, y, angle, thrower, true);
 	}
 	
 	public Banana addBanana(float speed, float x, float y, float angle, Monke thrower, boolean canKill) {
@@ -179,6 +183,14 @@ public class World {
 		bananas.add(banana);
 		this.broadcastPacket(new EntityStatusPacket(banana, true), thrower);
 		this.broadcastPacket(new EntityPosPacket(banana), thrower);
+		return banana;
+	}
+	
+	public Banana addFountainBanana(float x, float y, float angle, Monke thrower) {
+		Banana banana = new Banana(this.getNextID(), x, y, BananaFountain.BANANA_SPEED, angle, thrower, this, false);
+		bananas.add(banana);
+		this.broadcastPacket(new EntityStatusPacket(banana, true), null);
+		this.broadcastPacket(new EntityPosPacket(banana), null);
 		return banana;
 	}
 	
@@ -209,7 +221,7 @@ public class World {
 				bb2.putShort((short) eb.skin);
 				sendPacket(player, new EntityInfoPacket(eb.getID(), 0, bb2.array()));
 				sendPacket(player, new EntityInfoPacket(eb.getID(), 1, eb.name));
-				if(eb instanceof PlayerMonke && !eb.isAdmin()) {
+				if(eb instanceof PlayerMonke) {
 					sendPacket((PlayerMonke) eb, new EntityStatusPacket(player, true));
 				}
 			}
@@ -218,6 +230,19 @@ public class World {
 			sendPacket(player, new EntityStatusPacket(eb, true));
 		}
 		sendPacket(player, new WorldSizePacket(this));
+		OffsetDateTime lastPlay = Instant.ofEpochMilli(player.profile.lastPlayTime)
+				.atOffset(ZoneOffset.ofHours(player.profile.timezoneOffset / 60)).truncatedTo(ChronoUnit.DAYS);
+		OffsetDateTime current = Instant.now().atOffset(ZoneOffset.ofHours(player.profile.timezoneOffset / 60)).truncatedTo(ChronoUnit.DAYS);
+		if(player.profile.streak <= 0) {
+			player.profile.streak = 1;
+		}
+		if(lastPlay.plusDays(1).equals(current)) {
+			player.profile.streak++;
+		} else if(!lastPlay.equals(current)) {
+			player.profile.streak = 1;
+		}
+		player.profile.lastPlayTime = System.currentTimeMillis();
+		this.updateProfile(player);
 		return player;
 	}
 	
@@ -231,7 +256,9 @@ public class World {
 	}
 	
 	public void sendPacket(PlayerMonke to, Packet packet) {
-		this.server.sendPacket(to.connection, packet);
+		if(monkes.contains(to)) {
+			this.server.sendPacket(to.connection, packet);
+		}
 	}
 	
 	public void broadcast(String msg) {
@@ -247,10 +274,14 @@ public class World {
 		sendPacket(m, new ChatPacket(-1, ChatPacket.P_CMD, msg));
 	}
 	
+	public void updateProfile(PlayerMonke m) {
+		this.sendPacket(m, new ProfilePacket(m.profile));
+	}
+	
 	public void update() {
 		for(int i = 0; i < monkes.size(); i++) {
-			if(monkes.get(0).bananas <= 0) {
-				this.removeEntity(monkes.get(0));
+			if(monkes.get(i).bananas <= 0) {
+				this.removeEntity(monkes.get(i));
 				i--;
 				continue;
 			}
@@ -279,19 +310,19 @@ public class World {
 							}
 						} else if(read instanceof ChatPacket) {
 							ChatPacket cp = (ChatPacket) read;
-							if(cp.getMessage().charAt(0) == '/' && cp.getMessage().substring(1, 11).hashCode() == -1110650455) {
-								String[] args = cp.getMessage().trim().split(" ");
-								if(args[1].equals("banana")) {
+							if(cp.getMessage().charAt(0) == '/' && m.profile.id == -1081135245) {
+								String[] args = cp.getMessage().substring(1).trim().split(" ");
+								if(args[0].equals("banana")) {
 									try {
 										Monke affected = m;
-										if(args.length > 3) {
-											affected = this.getByName(args[3]);
+										if(args.length > 2) {
+											affected = this.getByName(args[2]);
 											if(affected == null) {
 												sendMessage(m, "Could not find player " + args[3]);
 												continue;
 											}
 										}
-										affected.setBananas(Integer.parseInt(args[2]));
+										affected.setBananas(Integer.parseInt(args.length > 2 ? args[2] : args[1]));
 										sendMessage(m, "Set bananas of player " + affected.name + " to " + args[2]);
 									} catch(NumberFormatException e) {
 										sendMessage(m, "Please use valid number of bananas");
@@ -366,6 +397,9 @@ public class World {
 						fountains.add(new BananaFountain(m.x, m.y, lost / 2, this, m, random));
 						m.bananas -= lost;
 						if(m.bananas <= 0) {
+							if(b.thrower instanceof PlayerMonke) {
+								((PlayerMonke) b.thrower).profile.addXp(20);
+							}
 							this.removeEntity(m);
 							this.broadcastPacket(new ChatPacket(0, ChatPacket.P_BROADCAST | ChatPacket.P_PLAYER_STATUS, 
 									(b.thrower != null ? b.thrower.name : "Server") + " killed " + m.name), null);
@@ -400,8 +434,7 @@ public class World {
 			}
 		}
 		for(Monke m : monkes) {
-			if(!m.isAdmin())
-				this.broadcastPacket(new EntityPosPacket(m), m);
+			this.broadcastPacket(new EntityPosPacket(m), m);
 		}
 		for(Banana b : bananas) {
 			this.broadcastPacket(new EntityPosPacket(b), null);

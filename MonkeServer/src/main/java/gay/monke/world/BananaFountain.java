@@ -4,6 +4,8 @@ import java.util.Random;
 
 public class BananaFountain {
 	
+	public static final float BANANA_SPEED = 45.0f;
+	
 	public int bananas;
 	private int timer = 0;
 	private World world;
@@ -24,7 +26,7 @@ public class BananaFountain {
 	public void update() {
 		if(timer % 10 == 0 && bananas > 0) {
 			bananas--;
-			Banana b = world.addBanana(45.0f, x, y, (float) (random.nextGaussian() * 0.1 + Math.PI / 2), monke, false);
+			Banana b = world.addFountainBanana(x, y, (float) (random.nextGaussian() * 0.1 + Math.PI / 2), monke);
 			b.x = x;
 			b.y = y;
 		}

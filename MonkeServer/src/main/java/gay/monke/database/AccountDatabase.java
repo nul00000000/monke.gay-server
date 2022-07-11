@@ -6,15 +6,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.mysql.cj.protocol.Resultset;
-
 import gay.monke.account.AccountProfile;
+import gay.monke.packet.TokenPacket;
 
 public class AccountDatabase {
 	
 	private Connection conn;
 	private PreparedStatement getTokenStatement;
 	private PreparedStatement getProfileStatement;
+	private PreparedStatement updateProfileStatement;
 	
 	public AccountDatabase() {
 		try {
@@ -23,23 +23,38 @@ public class AccountDatabase {
 			System.out.println(isValid ? "Successfully connected to account database" : "Failed to connect to account database");
 			getTokenStatement = conn.prepareStatement("SELECT * FROM tokens WHERE id = ? AND token = ?");
 			getProfileStatement = conn.prepareStatement("SELECT * FROM profiles WHERE id = ?");
+			updateProfileStatement = conn.prepareStatement("UPDATE profiles SET level=?, xp=?, streak=?, lastPlayTime=?, highscore=? WHERE id = ?");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public AccountProfile getProfileWithToken(int id, int token) {
+	public void updateProfile(AccountProfile profile) {
 		try {
-			getTokenStatement.setInt(1, id);
-			getTokenStatement.setInt(2, token);
+			updateProfileStatement.setShort(1, profile.level);
+			updateProfileStatement.setShort(2, profile.xp);
+			updateProfileStatement.setShort(3, profile.streak);
+			updateProfileStatement.setLong(4, profile.lastPlayTime);
+			updateProfileStatement.setInt(5, profile.highscore);
+			updateProfileStatement.setInt(6, profile.id);
+			updateProfileStatement.execute();
+		} catch(SQLException e) {
+			System.out.println("[SQL ERROR] Error updating profile, SQLState: " + e.getSQLState());
+		}
+	}
+	
+	public AccountProfile getProfileWithToken(TokenPacket packet) {
+		try {
+			getTokenStatement.setInt(1, packet.getId());
+			getTokenStatement.setInt(2, packet.getToken());
 			ResultSet rs = getTokenStatement.executeQuery();
 			if(rs.next()) {
-				getProfileStatement.setInt(1, id);
+				getProfileStatement.setInt(1, packet.getId());
 				ResultSet p = getProfileStatement.executeQuery();
 				if(p.next()) {
-					return new AccountProfile(id, p.getString("username"), p.getShort("level"), p.getShort("xp"), p.getShort("streak"));
+					return new AccountProfile(packet.getId(), p.getString("username"), p.getShort("level"), p.getShort("xp"), p.getShort("streak"), packet.getTimezoneOffset(), p.getLong("lastPlayTime"));
 				} else {
-					System.out.println("[ERROR] Could not find profile for token with id " + id);
+					System.out.println("[ERROR] Could not find profile for token with id " + packet.getId());
 					return null;
 				}
 			}

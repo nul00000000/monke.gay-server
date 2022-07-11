@@ -13,13 +13,15 @@ import gay.monke.packet.Packet;
 public class PlayerMonke extends Monke {
 	
 	public WebSocket connection;
-	public final AccountProfile account;
+	public final AccountProfile profile;
 	public boolean needsInfoUpdate = false;
+	
+	public int maxBananas = 0;
 
 	public PlayerMonke(int id, World world, WebSocket con, AccountProfile account) {
 		super(id, 0, world, null);
 		this.y = 0;
-		this.account = account;
+		this.profile = account;
 		this.connection = con;
 	}
 	
@@ -60,7 +62,8 @@ public class PlayerMonke extends Monke {
 	
 	@Override
 	public boolean isAdmin() {
-		return account.id == -1081135245;
+		//return account.id == -1081169420;
+		return false;
 	}
 	
 	@Override
@@ -80,6 +83,9 @@ public class PlayerMonke extends Monke {
 			canThrow = true;
 		}
 		ticks++;
+		if(bananas > maxBananas) {
+			maxBananas = bananas;
+		}
 		//do nothing because for now there shall be no regulation. Anarchy shall reign supreme. SUBSCRIBE TO TECHNOBLADE. <- this holds up a month later <- true 3 months <- fuck cancer 10 months
 	}
 	
