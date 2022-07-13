@@ -77,7 +77,7 @@ public class Server extends WebSocketServer {
 			System.out.println("tried to send null data from " + packet);
 			return false;
 		} catch(WebsocketNotConnectedException e) {
-			System.out.println("tried to send data to unconnected websocket");
+			System.out.println("tried to send data to unconnected websocket (" + packet.toString() + ")");
 			return false;
 		}
 	}
