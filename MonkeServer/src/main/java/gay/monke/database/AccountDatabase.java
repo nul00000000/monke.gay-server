@@ -15,6 +15,7 @@ public class AccountDatabase {
 	private PreparedStatement getTokenStatement;
 	private PreparedStatement getProfileStatement;
 	private PreparedStatement updateProfileStatement;
+	private PreparedStatement checkConnectionStatement;
 	
 	public AccountDatabase() {
 		try {
@@ -24,12 +25,24 @@ public class AccountDatabase {
 			getTokenStatement = conn.prepareStatement("SELECT * FROM tokens WHERE id = ? AND token = ?");
 			getProfileStatement = conn.prepareStatement("SELECT * FROM profiles WHERE id = ?");
 			updateProfileStatement = conn.prepareStatement("UPDATE profiles SET level=?, xp=?, streak=?, lastPlayTime=?, highscore=? WHERE id = ?");
+			checkConnectionStatement = conn.prepareStatement("SELECT * FROM logins WHERE id = 0");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void checkConnection() {
+		try {
+			checkConnectionStatement.executeQuery();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public void updateProfile(AccountProfile profile) {
+		if(!profile.isValid()) {
+			return;
+		}
 		try {
 			updateProfileStatement.setShort(1, profile.level);
 			updateProfileStatement.setShort(2, profile.xp);

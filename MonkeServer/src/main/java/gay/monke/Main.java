@@ -26,6 +26,8 @@ public class Main {
 	private Thread serverThread;
 	private AccountDatabase db;
 	
+	private long tick = 0;
+	
 	//private Random random;
 		
 	private void run() {
@@ -132,6 +134,10 @@ public class Main {
 	private void update() {
 		//this also updates the players
 		world.update();
+		tick++;
+		if(tick % (60 * 60 * 60) == 0) {
+			db.checkConnection();
+		}
 	}
 	
 	private Main() {
