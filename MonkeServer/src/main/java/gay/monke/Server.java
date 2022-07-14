@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.java_websocket.WebSocket;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.framing.CloseFrame;
@@ -20,11 +22,14 @@ public class Server extends WebSocketServer {
 	public ArrayList<WebSocket> outgoingConnections;
 	private HashMap<WebSocket, ArrayList<Packet>> incoming;
 	
+	private Logger log;
+	
 	public Server(InetSocketAddress address) {
 		super(address);
 		this.incoming = new HashMap<>();
 		this.incomingConnections = new ArrayList<>();
 		this.outgoingConnections = new ArrayList<>();
+		this.log = LogManager.getLogger("SERVER");
 	}
 	
 	public void shutdown(int closecode) {
@@ -74,10 +79,10 @@ public class Server extends WebSocketServer {
 			to.send(packet.encode());
 			return true;
 		} catch(IllegalArgumentException e) {
-			System.out.println("tried to send null data from " + packet);
+			log.debug("tried to send null data from " + packet);
 			return false;
 		} catch(WebsocketNotConnectedException e) {
-			System.out.println("tried to send data to unconnected websocket (" + packet.toString() + ")");
+			log.debug("tried to send data to unconnected websocket (" + packet.toString() + ")");
 			return false;
 		}
 	}
@@ -154,14 +159,14 @@ public class Server extends WebSocketServer {
 		int l = Packet.getLengthFromPrefix(prefixMut);
 		if(l == -1) {
 			try {
-				System.err.println("Prefix [" + new String(prefixMut, "UTF-8") + "] not recognized");
+				log.warn("Prefix [" + new String(prefixMut, "UTF-8") + "] not recognized");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
 			return;
 		} else if (l != message.limit() - 2) {
 			try {
-				System.err.println("Wrong amount of data for prefix [" + new String(prefixMut, "UTF-8") + "], expected length " + l + " but got " + 
+				log.warn("Wrong amount of data for prefix [" + new String(prefixMut, "UTF-8") + "], expected length " + l + " but got " + 
 						message.limit());
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
@@ -180,7 +185,7 @@ public class Server extends WebSocketServer {
 
 	@Override
 	public void onStart() {
-		System.out.println("Server started on " + this.getAddress());
+		log.info("Server started on " + this.getAddress());
 	}
 
 }

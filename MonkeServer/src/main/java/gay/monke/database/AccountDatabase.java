@@ -6,6 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import gay.monke.account.AccountProfile;
 import gay.monke.packet.TokenPacket;
 
@@ -17,11 +20,14 @@ public class AccountDatabase {
 	private PreparedStatement updateProfileStatement;
 	private PreparedStatement checkConnectionStatement;
 	
+	private Logger log;
+	
 	public AccountDatabase() {
+		this.log = LoggerFactory.getLogger("DATABSE");
 		try {
 			conn = DriverManager.getConnection("jdbc:mysql://192.168.1.48/users", AccountConstants.SQL_USER, AccountConstants.SQL_PASS);
 			boolean isValid = conn.isValid(0);
-			System.out.println(isValid ? "Successfully connected to account database" : "Failed to connect to account database");
+			log.info(isValid ? "Successfully connected to account database" : "Failed to connect to account database");
 			getTokenStatement = conn.prepareStatement("SELECT * FROM tokens WHERE id = ? AND token = ?");
 			getProfileStatement = conn.prepareStatement("SELECT * FROM profiles WHERE id = ?");
 			updateProfileStatement = conn.prepareStatement("UPDATE profiles SET level=?, xp=?, streak=?, lastPlayTime=?, highscore=? WHERE id = ?");
@@ -52,7 +58,7 @@ public class AccountDatabase {
 			updateProfileStatement.setInt(6, profile.id);
 			updateProfileStatement.execute();
 		} catch(SQLException e) {
-			System.out.println("[SQL ERROR] Error updating profile, SQLState: " + e.getSQLState());
+			log.error("Updating profile, SQLState: " + e.getSQLState());
 		}
 	}
 	
@@ -67,13 +73,13 @@ public class AccountDatabase {
 				if(p.next()) {
 					return new AccountProfile(packet.getId(), p.getString("username"), p.getShort("level"), p.getShort("xp"), p.getShort("streak"), packet.getTimezoneOffset(), p.getLong("lastPlayTime"));
 				} else {
-					System.out.println("[ERROR] Could not find profile for token with id " + packet.getId());
+					log.error("Could not find profile for token with id " + packet.getId());
 					return null;
 				}
 			}
 			return null;
 		} catch (SQLException e) {
-			System.out.println("[SQL ERROR] Error getting profile, SQLState: " + e.getSQLState());
+			log.error("Getting profile, SQLState: " + e.getSQLState());
 			return null;
 		}
 	}

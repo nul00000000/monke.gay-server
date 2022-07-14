@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.java_websocket.WebSocket;
 
 import gay.monke.account.AccountProfile;
@@ -28,10 +30,14 @@ public class Main {
 	
 	private long tick = 0;
 	
+	private Logger log;
+	
 	//private Random random;
 		
 	private void run() {
 		//this.random = new Random();
+		log = LogManager.getLogger("WORLD");
+		log.info("bruh");
 		world = new World(server, db);
 				
 		double TPS = 60;
@@ -113,7 +119,7 @@ public class Main {
 					}
 					if(prof != null) {
 						world.addPlayerMonke(con, prof);
-						System.out.println("[JOIN] " + prof.username + " (" + prof.id + ")");
+						log.info("[JOIN] " + prof.username + " (" + prof.id + ")");
 						queue.remove(i);
 						i--;
 					}
@@ -126,7 +132,7 @@ public class Main {
 			} else if(h == 0) {
 				//do nothing
 			} else {
-				System.err.println("Unrecognized availablity status: " + h);
+				log.debug("Unrecognized availablity status: " + h);
 			}
 		}
 	}

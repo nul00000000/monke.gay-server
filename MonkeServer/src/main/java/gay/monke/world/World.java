@@ -2,14 +2,12 @@ package gay.monke.world;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.java_websocket.WebSocket;
 
 import gay.monke.Server;
@@ -39,7 +37,10 @@ public class World {
 	
 	private ArrayList<String> names;
 	
+	private Logger log;
+	
 	public World(Server server, AccountDatabase db) {
+		this.log = LogManager.getLogger("WORLD");
 		this.server = server;
 		this.db = db;
 		bananas = new ArrayList<>();
@@ -73,7 +74,7 @@ public class World {
 	 * @param player The player in question
 	 */
 	public void reportModifiedClient(int level, PlayerMonke player) {
-		System.out.println("Level " + level + " MCW on player (" + player.name + ", " + player.connection.getRemoteSocketAddress() + ")");
+		log.warn("Level " + level + " MCW on player (" + player.name + ", " + player.connection.getRemoteSocketAddress() + ")");
 	}
 	
 	public int getNextID() {
@@ -154,14 +155,14 @@ public class World {
 				sendPacket(m, p);
 				server.closeConnection(m.connection, 0);
 //			}
-			System.out.println("[LEAVE] " + m.profile.username + " (" +  m.profile.id + ")");
+			log.info("[LEAVE] " + m.profile.username + " (" +  m.profile.id + ")");
 		}
 		if(e instanceof Monke) {
 			ret = monkes.remove(e);
 		} else if(e instanceof Banana) {
 			ret = bananas.remove(e);
 		} else {
-			System.out.println("Tried to remove entity not of known type");
+			log.debug("Tried to remove entity not of known type");
 			return false;
 		}
 		return ret;
@@ -230,15 +231,15 @@ public class World {
 			sendPacket(player, new EntityStatusPacket(eb, true));
 		}
 		sendPacket(player, new WorldSizePacket(this));
-		OffsetDateTime lastPlay = Instant.ofEpochMilli(player.profile.lastPlayTime)
-				.atOffset(ZoneOffset.ofHours(player.profile.timezoneOffset / 60)).truncatedTo(ChronoUnit.DAYS);
-		OffsetDateTime current = Instant.now().atOffset(ZoneOffset.ofHours(player.profile.timezoneOffset / 60)).truncatedTo(ChronoUnit.DAYS);
+		long dayLast = (player.profile.lastPlayTime - player.profile.timezoneOffset * 60000) / 86400000;
+		long dayCurr = (System.currentTimeMillis() - player.profile.timezoneOffset * 60000) / 86400000;
+		log.debug(player.profile.username + " " + player.profile.timezoneOffset);
 		if(player.profile.streak <= 0) {
 			player.profile.streak = 1;
 		}
-		if(lastPlay.plusDays(1).equals(current)) {
+		if(dayCurr - dayLast == 1) {
 			player.profile.streak++;
-		} else if(!lastPlay.equals(current)) {
+		} else if(dayCurr - dayLast > 1) {
 			player.profile.streak = 1;
 		}
 		player.profile.lastPlayTime = System.currentTimeMillis();
@@ -256,7 +257,7 @@ public class World {
 	}
 	
 	public void sendPacket(PlayerMonke to, Packet packet) {
-		if(monkes.contains(to)) {
+		if(monkes.contains(to) && to.connection.isOpen()) {
 			this.server.sendPacket(to.connection, packet);
 		}
 	}
@@ -329,17 +330,17 @@ public class World {
 									}
 								}
 							} else {
-								System.out.println("[CHAT] <" + m.name + "> " + cp.getMessage());
+								log.info("[CHAT] <" + m.name + "> " + cp.getMessage());
 								broadcastPacket(new ChatPacket(cp.getID(), 0, cp.getMessage()), null);
 							}
 						} else {
-							System.err.println("Unrecognized packet: " + read);
+							log.debug("Unrecognized packet: " + read);
 						}
 					}
 				}
 			} catch(Exception e) {
 				e.printStackTrace();
-				System.out.println("Error, kicking offending Monke");
+				log.error("Error, kicking offending Monke");
 				this.removeEntity(monkes.get(i));
 			}
 		}
